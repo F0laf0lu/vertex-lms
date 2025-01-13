@@ -62,6 +62,6 @@ jobs:
     steps:
     - name: Trigger Render Deployment
       env:
-        RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        DEPLOY_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
       run: |
-        curl -X POST $RENDER_DEPLOY_HOOK
+        curl -X POST $DEPLOY_URL
