@@ -10,10 +10,10 @@ describe("User Repository Tests", () => {
 
     test("should insert a user into the test database", async () => {
         const res = await pool.query(
-            "INSERT INTO users (name) VALUES ($1) RETURNING *",
-            ["Test User"]
+            "INSERT INTO users (email, firstname, lastname) VALUES ($1, $2, $3) RETURNING *",
+            ["TestUser@gmail", "Test", "User" ]
         );
 
-        expect(res.rows[0].name).toBe("Test User");
+        expect(res.rows[0].email).toBe("Test User");
     });
 });

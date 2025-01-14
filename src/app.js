@@ -8,14 +8,16 @@ const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDefinition = require("./docs/swaggerSetup");
 const { status } = require("http-status");
+const authRoutes = require('./routes/auth.routes')
+
 
 const app = express();
 
 
-// if (config.env !== "test") {
-//     app.use(morgan.successHandler);
-//     app.use(morgan.errorHandler);
-// }
+if (config.env !== "test") {
+    app.use(morgan.successHandler);
+    app.use(morgan.errorHandler);
+}
 
 
 app.use(express.json());
@@ -46,6 +48,7 @@ const specs = swaggerJsdoc({
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(specs));
 
+app.use('/auth', authRoutes)
 
 // Handle unknown routes
 app.use((req, res, next) => {
