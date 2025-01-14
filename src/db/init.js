@@ -11,10 +11,11 @@ const pool = new Pool({
     port: config.db.PORT,
 });
 
+const query = (text, params, callback) => {
+    return pool.query(text, params, callback);
+};
 
-pool.on('connect', ()=>{
-    console.log('Connected to the database')
-})
+
 
 
 
