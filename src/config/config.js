@@ -31,4 +31,8 @@ module.exports = {
         },
         from: process.env.EMAIL_FROM,
     },
+    app:{
+        appName: process.env.APP_NAME,
+        appURL: process.env.APP_URL
+    }
 };
