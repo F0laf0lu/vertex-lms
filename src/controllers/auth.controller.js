@@ -4,6 +4,8 @@ const ApiError = require('../utils/error.util')
 const bcrypt = require('bcryptjs')
 const JWT = require("jsonwebtoken")
 const config = require('../config/config')
+const { sendVerificationEmail } = require('../services/email.service')
+const { use } = require('../routes/auth.routes')
 
 
 const register = async(req, res, next)=>{
@@ -29,6 +31,10 @@ const register = async(req, res, next)=>{
             await client.query('INSERT INTO students("user") VALUES($1)', [userId]);
         }
         await client.query("COMMIT");
+        const verifyToken = JWT.sign({ email }, config.jwt.secret, {
+            expiresIn: "1d",
+        });
+        await sendVerificationEmail(user.rows[0].email, verifyToken);
         res.status(status.CREATED).json({
             success: true,
             user: user.rows[0]
@@ -53,7 +59,9 @@ const login = async(req, res, next)=>{
         if (!isValidPassword) {
             throw new ApiError(status.BAD_REQUEST, "Incorrect email or password");
         }
-        const token = JWT.sign({ email }, config.jwt.secret, config.jwt.accessExpirationMinutes )
+        const token = JWT.sign({ email }, config.jwt.secret, {
+            expiresIn: config.jwt.accessExpirationMinutes,
+        });
         res.status(status.OK).json({
             success: true,
             accessToken: token
@@ -61,7 +69,6 @@ const login = async(req, res, next)=>{
     } catch (error) {
         next(error)
     }
-
 }
 
 
