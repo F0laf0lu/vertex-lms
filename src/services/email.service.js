@@ -13,29 +13,33 @@ if (config.env !== "test") {
         .then(() => logger.info("Connected to email server"))
         .catch(() =>
             logger.warn(
-                "Unable to connect to email server. Make sure you have configured the SMTP options in .env"
+                "Unable to connect to email server. Make sure you have configured the SMTP options in .env or check your internet connection"
             )
         );
 }
 
 
-const sendEmail = async (to, subject, text) => {
-    const msg = { from: config.email.from, to, subject, text, html };
+const sendEmail = async (to, subject, text, html) => {
+    const msg = { 
+        from: config.email.from, 
+        to, 
+        subject, 
+        text, 
+        html 
+    };
     await transport.sendMail(msg);
 };
 
 
 const sendVerificationEmail = async (to, token) => {
     const subject = "Email Verification";
-    // replace this url with the link to the email verification page of your front-end app
-    const verificationEmailUrl = `http://link-to-app/verify-email?token=${token}`;
-    const text = `Dear user,
-        To verify your email, click on this link: ${verificationEmailUrl}
+    const verificationEmailUrl = `http://vertexlearn.com/verify-email?token=${token}`;
+    const text = `Dear user, To verify your email, click on this link: ${verificationEmailUrl}
         If you did not create an account, then ignore this email.`;
     const html = emailVerifyTemplate(
         config.app.appName,
         config.app.appURL,
-        text
+        verificationEmailUrl
     )
     await sendEmail(to, subject, text, html);
 };

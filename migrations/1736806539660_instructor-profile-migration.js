@@ -6,7 +6,7 @@ exports.up = (pgm) => {
             primaryKey: true,
             default: pgm.func("gen_random_uuid()"),
         },
-            
+        user: { type: "uuid", notNull: true },
         dateOfBirth: { type: "varchar(50)", notNull: false },
         gender: { type: "varchar(50)", notNull: false },
         phoneNumber: { type: "check_phone_number", notNull: false },

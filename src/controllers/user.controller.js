@@ -3,22 +3,84 @@ const pool = require("../db/init");
 
 
 
+const getAllUsers = async (req, res, next) => {
+    // Admin only endpoint
+    try {
+        const result = await pool.query('SELECT * FROM users')
+        const users = result.rows
+        res.status(status.OK).json({
+            success: true,
+            data:{
+                users
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+const manageUser = async (req, res, next) => {
+    // Admin only endpoint
+    try {
+        const {userId} = req.params
+        const result = await pool.query("SELECT id, email, firstname, lastname, isinstructor, isverified FROM users WHERE id=$1",[userId]);
+        if (result.rows.length === 0) {
+            throw new ApiError(status.NOT_FOUND, "User not found");
+        }
+        if (req.method === 'GET') {
+            const user = result.rows[0];
+            return res.status(status.OK).json({
+                success: true,
+                data: {
+                    user,
+                },
+            });
+        }
+        if (req.method === "DELETE") {
+            await pool.query('DELETE FROM users WHERE id=$1', [userId])
+            return res.status(status.NO_CONTENT).json({
+                success: true,
+                message: "User deleted successfully",
+                data: {}
+            });
+        }
+        throw new ApiError(status.METHOD_NOT_ALLOWED, "Invalid request method");
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+
+
+
 const getAllStudentProfile = async(req , res, next)=>{
     // Admin only 
     try {
+        const result = await pool.query("SELECT * FROM students");
+        const students = result.rows;
         res.status(status.OK).json({
-            success:true
-        })
+            success: true,
+            data: {
+                students,
+            },
+        });
     } catch (error) {
-        next(error)
+        next(error);
     }
 }
 
 const getAllInstructorProfile = async (req, res, next) => {
     // Admin only
     try {
+        const result = await pool.query("SELECT * FROM instructors");
+        const instructors = result.rows;
         res.status(status.OK).json({
             success: true,
+            data: {
+                instructors,
+            },
         });
     } catch (error) {
         next(error);
@@ -48,4 +110,13 @@ const updateProfile = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
+};
+
+
+
+module.exports = {
+    getAllUsers,
+    manageUser,
+    getAllStudentProfile,
+    getAllInstructorProfile,
 };

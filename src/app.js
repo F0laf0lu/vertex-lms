@@ -9,7 +9,7 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerDefinition = require("./docs/swaggerSetup");
 const { status } = require("http-status");
 const authRoutes = require('./routes/auth.routes')
-
+const userRoutes = require('./routes/user.routes')
 
 const app = express();
 
@@ -29,16 +29,6 @@ app.use(cors());
 app.options("*", cors());
 
 
-// Route to test error handling
-
-// app.get("/", function (req, res, next) {
-//     try {
-//         // throw new ApiError(404, "Resource not found", false);
-//         throw new Error("Resource not found")
-//     } catch (error) {
-//         next(error);
-//     } 
-// });
 
 
 const specs = swaggerJsdoc({
@@ -49,6 +39,7 @@ const specs = swaggerJsdoc({
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 app.use('/auth', authRoutes)
+app.use('/users', userRoutes)
 
 // Handle unknown routes
 app.use((req, res, next) => {
