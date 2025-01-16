@@ -33,6 +33,7 @@
     },
     "devDependencies": {
         "cross-env": "^7.0.3",
+        "faker": "^6.6.6",
         "jest": "^29.7.0",
         "node-pg-migrate": "^7.9.0",
         "nodemon": "^3.1.9",

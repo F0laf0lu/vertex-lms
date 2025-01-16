@@ -1,4 +1,4 @@
-const emailVerifyTemplate = (APP_NAME, APP_URL, message) => {
+const emailVerifyTemplate = (APP_NAME, APP_URL, verifyLink) => {
     return `
     <!DOCTYPE html>
         <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
@@ -87,10 +87,12 @@ const emailVerifyTemplate = (APP_NAME, APP_URL, message) => {
     
                                                 <p
                                                 style="margin-bottom: 10px;text-transform: capitalize;color:#000000; text-align: left;">
-                                                
-                                                ${message}
+
+                                                To verify your email, click on this link: <a style="color: #3876b4; text-decoration:none;"
+                                                    href="${verifyLink}">Verify Link</a>
+                                                If you did not create an account, then ignore this email.
                                             </p>
-        
+
                                             
         
                                             <p
