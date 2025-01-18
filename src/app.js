@@ -8,8 +8,9 @@ const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDefinition = require("./docs/swaggerSetup");
 const { status } = require("http-status");
-const authRoutes = require('./routes/auth.routes')
-const userRoutes = require('./routes/user.routes')
+const authRoutes = require('./routes/auth.router')
+const userRoutes = require('./routes/user.router')
+const courseRouter = require('./routes/course.router')
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 app.use('/auth', authRoutes)
 app.use('/users', userRoutes)
+app.use("/courses", courseRouter);
 
 // Handle unknown routes
 app.use((req, res, next) => {

@@ -37,14 +37,7 @@ const manageUser = async (req, res, next) => {
                 },
             });
         }
-        if (req.method === "DELETE") {
-            await pool.query('DELETE FROM users WHERE id=$1', [userId])
-            return res.status(status.NO_CONTENT).json({
-                success: true,
-                message: "User deleted successfully",
-                data: {}
-            });
-        }
+
         throw new ApiError(status.METHOD_NOT_ALLOWED, "Invalid request method");
     } catch (error) {
         next(error);

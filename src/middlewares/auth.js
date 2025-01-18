@@ -24,7 +24,7 @@ const authMiddleware = async (req, res, next) => {
             throw new ApiError(status.UNAUTHORIZED, "Authorization Failed. Invalid token payload");
         }
         const result = await pool.query(
-            "SELECT id, email, isinstructor, isverified FROM users WHERE id=$1",
+            "SELECT id, email, isinstructor, isverified, isadmin FROM users WHERE id=$1",
             [payload.userId]
         );
         if (result.rows.length === 0) {
@@ -37,7 +37,30 @@ const authMiddleware = async (req, res, next) => {
     }
 };
 
+const isadmin = (req, res, next)=>{
+    if (!req.user.isadmin) {
+        throw new ApiError(status.FORBIDDEN, "Not allowed");
+    }
+    next()
+}
 
+const isInstructor = (req,res, next)=>{
+        if (!req.user.isinstructor) {
+            throw new ApiError(status.FORBIDDEN, "You need to be an instructor");
+        }
+        next()
+}
 
+const isStudent = (req, res, next) => {
+    if (req.user.isinstructor) {
+        throw new ApiError(status.FORBIDDEN, "You need to be a Student");
+    }
+    next();
+};
 
-module.exports = authMiddleware
+module.exports = {
+    authMiddleware,
+    isInstructor,
+    isStudent,
+    isadmin,
+}
