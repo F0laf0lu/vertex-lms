@@ -1,6 +1,6 @@
 const { status } = require("http-status");
 const pool = require("../db/init");
-
+const ApiError = require("../utils/error.util");
 
 
 const getAllUsers = async (req, res, next) => {

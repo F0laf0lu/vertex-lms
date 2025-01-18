@@ -5,11 +5,11 @@ const {createCourse, getAllCourses, getCourse, updateCourse, deleteCourse } = re
 
 const router = express.Router()
 
-router.post('/', authMiddleware, isInstructor, createCourse)
+router.post('/courseId/modules', authMiddleware, isInstructor, createCourse)
 router.get('/', getAllCourses)
 router.get('/:id', getCourse)
-router.patch('/:id', updateCourse)
-router.patch('/:id', deleteCourse)
+router.patch('/:id', authMiddleware, updateCourse)
+router.delete('/:id', authMiddleware, deleteCourse)
 
 
 module.exports = router

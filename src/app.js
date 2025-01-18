@@ -11,6 +11,7 @@ const { status } = require("http-status");
 const authRoutes = require('./routes/auth.router')
 const userRoutes = require('./routes/user.router')
 const courseRouter = require('./routes/course.router')
+const moduleRouter = require('./routes/module.router')
 
 const app = express();
 
@@ -41,7 +42,9 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 app.use('/auth', authRoutes)
 app.use('/users', userRoutes)
-app.use("/courses", courseRouter);
+app.use('/courses', courseRouter);
+app.use("/:courseId/modules", moduleRouter);
+
 
 // Handle unknown routes
 app.use((req, res, next) => {
