@@ -12,11 +12,11 @@ const authRoutes = require('./routes/auth.router')
 const userRoutes = require('./routes/user.router')
 const courseRouter = require('./routes/course.router')
 const moduleRouter = require('./routes/module.router')
+const lessonRouter = require('./routes/lesson.router')
 
 const app = express();
 
-
-if (config.env !== "test") {
+if (config.env !== "test"){
     app.use(morgan.successHandler);
     app.use(morgan.errorHandler);
 }
@@ -27,11 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 
 
 app.use(cors());
-
 app.options("*", cors());
-
-
-
 
 const specs = swaggerJsdoc({
     swaggerDefinition,
@@ -39,16 +35,16 @@ const specs = swaggerJsdoc({
 });
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(specs));
-
 app.use('/auth', authRoutes)
 app.use('/users', userRoutes)
 app.use('/courses', courseRouter);
 app.use("/:courseId/modules", moduleRouter);
+app.use("/:courseId/modules/:moduleId/lessons", lessonRouter);
 
 
 // Handle unknown routes
 app.use((req, res, next) => {
-    next(new ApiError(status.NOT_FOUND, 'Not found'));
+    next(new ApiError(status.NOT_FOUND, 'URL route not found'));
 });
 
 app.use(errorConverter);

@@ -89,11 +89,11 @@ const login = async (req, res, next) => {
         const getUser = await pool.query("SELECT * FROM users WHERE email=$1", [email]);
         const user = getUser.rows[0];
         if (getUser.rows.length === 0) {
-            throw new ApiError(status.BAD_REQUEST, "Incorrect email or password");
+            throw new ApiError(status.UNAUTHORIZED, "Invalid email or password");
         }
         const isValidPassword = bcrypt.compare(password, user.password);
         if (!isValidPassword) {
-            throw new ApiError(status.BAD_REQUEST, "Incorrect email or password");
+            throw new ApiError(status.UNAUTHORIZED, "Invalid email or password");
         }
         const userId = getUser.rows[0].id;
         const accessToken = JWT.sign({ userId }, config.jwt.secret, {

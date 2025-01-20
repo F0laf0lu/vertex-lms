@@ -3,9 +3,6 @@ const pool = require("../db/init");
 const ApiError = require("../utils/error.util");
 
 
-// createModule, getModules, getModule, updateModule, deleteModule;
-
-
 const createModule = async(req, res, next)=>{
     try {
             const {courseId} = req.params
@@ -51,7 +48,7 @@ const getModules = async(req, res, next)=>{
         }
         const course = courseResult.rows[0];
         const result = await pool.query("SELECT * FROM module WHERE course=$1", [course.id]);
-        const modules = result.rows[0]
+        const modules = result.rows
         res.status(status.OK).json({
             success: true,
             message: "Modules fetched for course",
@@ -89,47 +86,32 @@ const getModule = async(req, res, next)=>{
 
 const updateModule = async(req, res, next)=>{
     try {
-        const { courseId, moduleId } = req.params;
-        const courseResult = await pool.query("SELECT * FROM course WHERE id=$1", [courseId]);
-        if (courseResult.rows.length === 0) {
-            throw new ApiError(status.NOT_FOUND, "Course not found");
-        }
-
-        const profileResult = await pool.query('SELECT * FROM instructors WHERE "user"=$1', [
-            user.id,
-        ]);
-        if (profileResult.rows.length === 0) {
-            throw new ApiError(status.NOT_FOUND, "User profile not found");
-        }
-
-        const course = courseResult.rows[0];
-        const instructorId = profileResult.rows[0].id;
-        if (instructorId !== course.instructor && !user.isadmin) {
-            throw new ApiError(status.FORBIDDEN, "Permission denied");
-        }
+        const { moduleId } = req.params;
         const result = await pool.query("SELECT * FROM module WHERE id=$1", [moduleId]);
         if (result.rows.length === 0) {
             throw new ApiError(status.NOT_FOUND, "Module not found");
         }
         if (Object.keys(req.body).length === 0) throw new ApiError(status.BAD_REQUEST, "No fields to update for module");
         ;
-
         const fields = [];
         const values = [];
-        let index = 1;
-        for ([keys, values] in Object.entries(req.body)) {
-            fields.push(`${key} = $${index}`);
-            values.push(values);
-            index++;
+        Object.entries(req.body).map((entry, index) => {
+            fields.push(`${entry[0]}=$${index + 1}`);
+            values.push(entry[1]);
+        });
+        if (fields.length === 0) {
+            throw new ApiError(status.BAD_REQUEST, "No fields to update");
         }
         values.push(moduleId);
-        const updateQuery = `UPDATE course SET ${fields.join(", ")} WHERE id = $${index} RETURNING *`;
+        const updateQuery = `UPDATE module SET ${fields.join(", ")} WHERE id = $${fields.length + 1} RETURNING *`;
         const updateResult = await pool.query(updateQuery, values);
+        if (updateResult.rows.length === 0) {
+            throw new ApiError(status.INTERNAL_SERVER_ERROR, "Failed to update module");
+        }
         return res.status(status.OK).json({
             success: true,
             data: updateResult.rows[0],
         });
-
     } catch (error) {
         next(error)
     }
@@ -138,24 +120,7 @@ const updateModule = async(req, res, next)=>{
 
 const deleteModule = async(req, res, next)=>{
     try {
-        const { courseId, moduleId } = req.params;
-        const courseResult = await pool.query("SELECT * FROM course WHERE id=$1", [courseId]);
-        if (courseResult.rows.length === 0) {
-            throw new ApiError(status.NOT_FOUND, "Course not found");
-        }
-
-        const profileResult = await pool.query('SELECT * FROM instructors WHERE "user"=$1', [
-            user.id,
-        ]);
-        if (profileResult.rows.length === 0) {
-            throw new ApiError(status.NOT_FOUND, "User profile not found");
-        }
-
-        const course = courseResult.rows[0];
-        const instructorId = profileResult.rows[0].id;
-        if (instructorId !== course.instructor && !user.isadmin) {
-            throw new ApiError(status.FORBIDDEN, "Permission denied");
-        }
+        const { moduleId } = req.params;
         const result = await pool.query("SELECT * FROM module WHERE id=$1", [moduleId]);
         if (result.rows.length === 0) {
             throw new ApiError(status.NOT_FOUND, "Module not found");

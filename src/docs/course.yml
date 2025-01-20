@@ -1,0 +1,268 @@
+paths:
+  /courses:
+    get:
+      summary: Get all courses
+      description: Retrieves a list of all available courses.
+      tags:
+        - Course
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          description: Number of courses per page
+          required: false
+          schema:
+            type: integer
+            example: 10
+      responses:
+        '200':
+          description: List of courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Course'
+        '500':
+          description: Internal server error
+
+    post:
+      summary: Create a new course
+      description: Adds a new course to the database.
+      tags:
+        - Course
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewCourse'
+      responses:
+        '201':
+          description: Course created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
+  /courses/{id}:
+    get:
+      summary: Get a course by ID
+      description: Retrieves details of a specific course.
+      tags:
+        - Course
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier of the course
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Course details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+        '404':
+          description: Course not found
+        '500':
+          description: Internal server error
+
+    patch:
+      summary: Update a course
+      description: Updates the details of an existing course.
+      tags:
+        - Course
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier of the course
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCourse'
+      responses:
+        '200':
+          description: Course updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+        '400':
+          description: Bad request
+        '404':
+          description: Course not found
+        '500':
+          description: Internal server error
+
+    delete:
+      summary: Delete a course
+      description: Removes a course from the database.
+      tags:
+        - Course
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier of the course
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Course deleted successfully
+        '404':
+          description: Course not found
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+    Course:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        instructor:
+          type: string
+          format: uuid
+        price:
+          type: number
+          format: float
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        prerequisites:
+          type: string
+        coverimage:
+          type: string
+          format: uri
+        iscertified:
+          type: boolean
+        isavailable:
+          type: boolean
+        duration:
+          type: integer
+          description: Total duration of the course in minutes
+        averageRating:
+          type: number
+          format: float
+          description: Average rating of the course
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        id: "5ebac534954b54139806c112"
+        name: "Introduction to Programming"
+        description: "Learn the basics of programming with Python."
+        instructor: "1a2b3c4d-5678-90ef-abcd-1234567890ab"
+        price: 49.99
+        difficulty: "beginner"
+        prerequisites: "Basic computer knowledge"
+        coverimage: "https://example.com/course-cover.jpg"
+        iscertified: true
+        isavailable: true
+        duration: 120
+        averageRating: 4.5
+        createdAt: "2025-01-19T12:34:56Z"
+        updatedAt: "2025-01-19T12:34:56Z"
+
+    NewCourse:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        instructor:
+          type: string
+          format: uuid
+        price:
+          type: number
+          format: float
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        prerequisites:
+          type: string
+        coverimage:
+          type: string
+          format: uri
+        iscertified:
+          type: boolean
+        isavailable:
+          type: boolean
+      required:
+        - name
+        - description
+        - instructor
+        - difficulty
+      example:
+        name: "Advanced Machine Learning"
+        description: "Deep dive into ML algorithms and neural networks."
+        instructor: "1a2b3c4d-5678-90ef-abcd-1234567890ab"
+        price: 99.99
+        difficulty: "advanced"
+        prerequisites: "Basic understanding of Python and statistics"
+        coverimage: "https://example.com/ml-cover.jpg"
+        iscertified: true
+        isavailable: true
+
+    UpdateCourse:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        prerequisites:
+          type: string
+        coverimage:
+          type: string
+          format: uri
+        iscertified:
+          type: boolean
+        isavailable:
+          type: boolean
+      example:
+        name: "Updated Course Name"
+        description: "Updated course description."
+        price: 79.99
+        difficulty: "intermediate"
+        prerequisites: "Updated prerequisites"
+        coverimage: "https://example.com/updated-cover.jpg"
+        iscertified: false
+        isavailable: false

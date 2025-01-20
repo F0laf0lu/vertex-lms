@@ -6,7 +6,8 @@ const createCourse = async (req, res, next) => {
     try {       
         const { name, description, difficulty, ...rest } = req.body;
 
-        const instructorResult = await pool.query('SELECT * FROM instructors WHERE "user" = $1', [req.user.id]);
+        const instructorResult = await pool.query('SELECT id FROM instructors WHERE "user" = $1', [req.user.id]);
+        
         const result = await pool.query(
             "INSERT INTO course(name, description, difficulty, instructor) VALUES($1, $2, $3, $4) RETURNING *",
             [name, description, difficulty, instructorResult.rows[0].id]
@@ -45,7 +46,6 @@ const createCourse = async (req, res, next) => {
     }
 };
 
-// Pagination!
 
 const getAllCourses = async(req, res, next)=>{
     try {
@@ -64,8 +64,8 @@ const getAllCourses = async(req, res, next)=>{
 
 const getCourse = async(req, res, next)=>{
     try {
-        const {id} = req.params
-        const result = await pool.query("SELECT * FROM course WHERE id=$1", [id])
+        const { courseId } = req.params;
+        const result = await pool.query("SELECT * FROM course WHERE id=$1", [courseId]);
         
         if (result.rows.length === 0) {
             throw new ApiError(status.NOT_FOUND, "Course not found");
@@ -84,22 +84,7 @@ const getCourse = async(req, res, next)=>{
 
 const updateCourse = async(req, res, next)=>{
     try {
-        const { id } = req.params;
-        const {user} = req
-        const courseResult = await pool.query("SELECT * FROM course WHERE id=$1", [id]);
-        if (courseResult.rows.length === 0) {
-            throw new ApiError(status.NOT_FOUND, "Course not found");
-        }
-        const profileResult = await pool.query('SELECT * FROM instructors WHERE "user"=$1', [
-            user.id,
-        ]);
-        const course = courseResult.rows[0];
-        const instructorId = profileResult.rows[0].id;
-        if (instructorId !== course.instructor && !user.isadmin) {
-            throw new ApiError(status.FORBIDDEN, "Permission denied");
-        }
-
-        
+        const { courseId } = req.params;
         const fields = [];
         const data = [];
         Object.entries(req.body).map((entry, index) => {
@@ -109,10 +94,9 @@ const updateCourse = async(req, res, next)=>{
         if (fields.length === 0) {
             throw new ApiError(status.BAD_REQUEST, "No fields to update");
         } 
-        data.push(id);
+        data.push(courseId);
         const updateQuery = `UPDATE course SET ${fields.join(", ")} WHERE id = $${fields.length + 1} RETURNING *`;
         const updateResult = await pool.query(updateQuery, data)
-        console.log(updateQuery)
         return res.status(status.OK).json({
             success: true,
             data: updateResult.rows[0],
@@ -125,22 +109,7 @@ const updateCourse = async(req, res, next)=>{
 
 const deleteCourse = async(req, res, next)=>{
     try {
-        const { id } = req.params;
-        const { user } = req;
-        console.log(user)
-        const courseResult = await pool.query("SELECT * FROM course WHERE id=$1", [id]);
-        if (courseResult.rows.length === 0) {
-            throw new ApiError(status.NOT_FOUND, "Course not found");
-        } 
-
-        const profileResult = await pool.query('SELECT * FROM instructors WHERE "user"=$1', [
-            user.id,
-        ]);
-        const course = courseResult.rows[0];
-        const instructorId = profileResult.rows[0].id;
-        if (instructorId !== course.instructor && !user.isadmin) {
-            throw new ApiError(status.FORBIDDEN, "Permission denied");
-        }
+        const { courseId } = req.params;
         await pool.query("DELETE FROM course WHERE id=$1", [id]);
         return res.status(status.NO_CONTENT).json({
             success: true,
