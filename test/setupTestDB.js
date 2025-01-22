@@ -13,8 +13,7 @@ const setupTestDB = () => {
     let client;
 
     beforeAll(async () => {
-        client = await pool.connect(); // Acquire a client
-        // console.log("Connected to the test database");
+        client = await pool.connect(); 
     });
 
     beforeEach(async () => {
@@ -26,9 +25,10 @@ const setupTestDB = () => {
     });
 
     afterAll(async () => {
-        client.release(); 
-        await pool.end(); 
-        // console.log("Closed the test database connection");
+        if (client) {
+            client.release(); 
+        }
+        await pool.end();
     });
 };
 

@@ -7,7 +7,6 @@ const createCourse = async (req, res, next) => {
         const { name, description, difficulty, ...rest } = req.body;
 
         const instructorResult = await pool.query('SELECT id FROM instructors WHERE "user" = $1', [req.user.id]);
-        
         const result = await pool.query(
             "INSERT INTO course(name, description, difficulty, instructor) VALUES($1, $2, $3, $4) RETURNING *",
             [name, description, difficulty, instructorResult.rows[0].id]
