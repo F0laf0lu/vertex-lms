@@ -58,7 +58,7 @@ const createUser = async(userDetails)=>{
     const query = `INSERT INTO users(${fields.join(",")}) VALUES(${data.join(",")}) RETURNING id, email, firstname, lastname, isinstructor, isverified`;
     const result = await pool.query(query, values)
     if (result.rows[0].isinstructor) {
-        pool.query('INSERT INTO instructors("user") VALUES($1)', [result.rows[0].id]);
+        await pool.query('INSERT INTO instructors("user") VALUES($1)', [result.rows[0].id]);
     } else {
         await pool.query('INSERT INTO students("user") VALUES($1)', [result.rows[0].id]);
     }
