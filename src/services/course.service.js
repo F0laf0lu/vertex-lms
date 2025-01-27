@@ -1,19 +1,18 @@
 const pool = require("../db/init");
 const ApiError = require("../utils/error.util");
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
 
 
 
-
-const createCourse = async (userId, courseData) => {
+const createCourseService = async (userId, courseData) => {
     const { name, description, difficulty, ...rest } = courseData;
     const instructorResult = await pool.query('SELECT id FROM instructors WHERE "user" = $1', [
         userId,
     ]);
-
     if (instructorResult.rows.length === 0) {
         throw new ApiError(400, "Instructor not found");
     }
-
     const result = await pool.query(
         "INSERT INTO course(name, description, difficulty, instructor) VALUES($1, $2, $3, $4) RETURNING *",
         [name, description, difficulty, instructorResult.rows[0].id]
@@ -74,7 +73,7 @@ const deleteCourse = async (courseId) => {
 };
 
 module.exports = {
-    createCourse,
+    createCourseService,
     getAllCourses,
     getCourseById,
     updateCourse,

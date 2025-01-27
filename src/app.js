@@ -14,6 +14,8 @@ const courseRouter = require('./routes/course.router')
 const moduleRouter = require('./routes/module.router')
 const lessonRouter = require('./routes/lesson.router')
 
+
+
 const app = express();
 
 if (config.env !== "test"){

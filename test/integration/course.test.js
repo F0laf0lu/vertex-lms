@@ -3,7 +3,6 @@ const { faker } = require("@faker-js/faker");
 const { status } = require("http-status");
 const app = require("../../src/app");
 const pool = require("../../src/db/init");
-const ApiError = require("../../src/utils/error.util");
 const {admin, instructorOne, createUser, studentOne} = require("../fixtures/user.fixture")
 const generateToken = require("../fixtures/token.fixture")
 
@@ -62,5 +61,23 @@ describe('Course Routes', () => {
         })
 
     });
+
+
+    describe('GET courses', () => { 
+        beforeEach(() => {
+            newCourse = {
+                name: faker.lorem.word(5),
+                description: faker.lorem.sentence(),
+                difficulty: faker.helpers.arrayElement(["beginner", "intermediate", "advanced"]),
+            };
+        });
+
+        test('should get all course', async() => { 
+            const res = await request(app).get('/courses')
+                    .expect(status.OK)
+                    
+        })
+
+    })
 
 });

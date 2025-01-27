@@ -1,41 +1,13 @@
 const {status} = require("http-status")
 const pool = require("../db/init");
 const ApiError = require("../utils/error.util");
+const {createCourseService, getCourseById} = require("../services/course.service")
 
 const createCourse = async (req, res, next) => {
     try {       
-        const { name, description, difficulty, ...rest } = req.body;
-
-        const instructorResult = await pool.query('SELECT id FROM instructors WHERE "user" = $1', [req.user.id]);
-        const result = await pool.query(
-            "INSERT INTO course(name, description, difficulty, instructor) VALUES($1, $2, $3, $4) RETURNING *",
-            [name, description, difficulty, instructorResult.rows[0].id]
-        );
-
-        const newCourse = result.rows[0];
-        if (Object.keys(rest).length > 0) {
-            const updates = [];
-            const values = [newCourse.id];
-            let index = 2;
-
-            // build the UPDATE query dynamically
-            for (const [key, value] of Object.entries(rest)) {
-                updates.push(`${key} = $${index}`);
-                values.push(value);
-                index++;
-            }
-
-            // Construct the final SQL UPDATE query
-            const updateQuery = `UPDATE course SET ${updates.join(", ")} WHERE id = $1 RETURNING *`;
-            const updateResult = await pool.query(updateQuery, values);
-
-            // Return the updated course details
-            return res.status(status.CREATED).json({
-                success: true,
-                data: updateResult.rows[0],
-            });
-        }
-
+        // console.log(req)
+        // console.log(req.file)
+        const newCourse = await createCourseService(req.user.id, req.body)
         return res.status(status.CREATED).json({
             success: true,
             data: newCourse,
