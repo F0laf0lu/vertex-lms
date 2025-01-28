@@ -13,7 +13,8 @@ const userRoutes = require('./routes/user.router')
 const courseRouter = require('./routes/course.router')
 const moduleRouter = require('./routes/module.router')
 const lessonRouter = require('./routes/lesson.router')
-
+const paymentRouter = require('./routes/payment.router')
+const enrollRouter = require('./routes/enrollment.router')
 
 
 const app = express();
@@ -42,6 +43,9 @@ app.use('/users', userRoutes)
 app.use('/courses', courseRouter);
 app.use("/:courseId/modules", moduleRouter);
 app.use("/:courseId/modules/:moduleId/lessons", lessonRouter);
+app.use("/pay", paymentRouter)
+app.use("/enroll", enrollRouter)
+
 
 
 // Handle unknown routes

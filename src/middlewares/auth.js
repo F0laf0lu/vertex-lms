@@ -54,7 +54,7 @@ const isInstructor = (req,res, next)=>{
 
 const isStudent = (req, res, next) => {
     if (req.user.isinstructor) {
-        throw new ApiError(status.FORBIDDEN, "You need to be a Student");
+        throw new ApiError(status.FORBIDDEN, "Instructor not allowed");
     }
     next();
 };
