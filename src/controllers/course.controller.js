@@ -6,7 +6,7 @@ const {createCourseService,
         updateCourseService, 
         deleteCourseService} = require("../services/course.service")
 
-const {uploadToS3}  = require("../middlewares/upload");
+const {uploadToS3, removeFromS3}  = require("../middlewares/upload");
 
 const createCourse = async (req, res, next) => {
     try {       
@@ -55,6 +55,10 @@ const getCourse = async(req, res, next)=>{
 const updateCourse = async (req, res, next) => {
     try {
         const { courseId } = req.params;
+        if (req.file) {
+            const coverImage = await uploadToS3(req.file);
+            req.body.coverImage = coverImage;
+        }
         const updatedCourse = await updateCourseService(courseId, req.body);
         res.status(status.OK).json({
             success: true,

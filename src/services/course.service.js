@@ -1,5 +1,8 @@
 const pool = require("../db/init");
+const { removeFromS3 } = require("../middlewares/upload");
 const ApiError = require("../utils/error.util");
+
+
 
 const createCourseService = async (userId, courseData) => {
     const client = await pool.connect();
@@ -49,14 +52,22 @@ const getCourseService = async (courseId) => {
 };
 
 const updateCourseService = async (courseId, courseData) => {
+
+    const courseResult = await pool.query("SELECT coverimage FROM course WHERE id=$1", [courseId]);
+    if (courseResult.rows.length === 0) {
+        throw new ApiError(404, "Course not found");
+    }
+    const oldImageUrl = courseResult.rows[0].coverimage;
+    if (oldImageUrl) {
+        await removeFromS3(oldImageUrl);
+    }
+
     const fields = [];
     const values = [];
-
     Object.entries(courseData).forEach((entry, index) => {
         fields.push(`${entry[0]}=$${index + 1}`);
         values.push(entry[1]);
     });
-
     if (fields.length === 0) {
         throw new ApiError(400, "No fields to update");
     }
@@ -69,8 +80,11 @@ const updateCourseService = async (courseId, courseData) => {
 };
 
 const deleteCourseService = async (courseId) => {
-    await pool.query("DELETE FROM course WHERE id=$1", [courseId]);
-
+     const result = await pool.query("DELETE FROM course WHERE id=$1 RETURNING *", [courseId]);
+    if (result.rowCount === 0) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "Course not found");
+    }
+    await removeFromS3(result.rows[0].coverimage)
     return { message: "Course deleted successfully" };
 };
 

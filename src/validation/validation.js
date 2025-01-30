@@ -1,13 +1,11 @@
 const Joi = require("joi");
 const ApiError = require("../utils/error.util");
 const { status } = require("http-status");
-const multer = require("multer");
 
 
 
 const validateRequest = (schema) => {
-    return [ upload.none(),
-        (req, res, next) => {
+    return (req, res, next) => {
         const { error, value } = schema.validate(req.body, {
             abortEarly: false,
             stripUnknown: true,
@@ -20,7 +18,6 @@ const validateRequest = (schema) => {
         req.body = value; 
         next();
     }
-    ]
 };
 
 module.exports = validateRequest;

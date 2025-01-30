@@ -10,8 +10,15 @@ const courseSchema = Joi.object({
     isavailable: Joi.boolean().default(true),
 });
 
-const validateCourse = (courseData) => {
-    return courseSchema.validate(courseData, { abortEarly: false });
-};
+const updateCourseSchema = Joi.object({
+    name: Joi.string().min(3).max(100).optional(),
+    description: Joi.string().max(500).optional(),
+    difficulty: Joi.string().valid("beginner", "intermediate", "advanced").optional(),
+    price: Joi.number().min(0).optional(),
+    prerequisites: Joi.string().allow(null, "").optional(),
+    coverimage: Joi.string().allow(null).optional(),
+    iscertified: Joi.boolean().optional(),
+    isavailable: Joi.boolean().optional(),
+}).min(1);
 
-module.exports = { validateCourse, courseSchema };
+module.exports = { courseSchema, updateCourseSchema };
