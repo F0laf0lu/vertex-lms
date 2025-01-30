@@ -1,5 +1,5 @@
 const express = require("express");
-const { authMiddleware, isInstructorOrAdmin} = require("../middlewares/auth");
+const { authMiddleware, isCourseInstructor} = require("../middlewares/auth");
 const {createModule, getModules, getModule, updateModule, deleteModule } = require("../controllers/module.controller");
 
 const router = express.Router({mergeParams:true});
@@ -8,10 +8,10 @@ const router = express.Router({mergeParams:true});
 
 
 router.get('/', getModules)
-router.post("/", authMiddleware, isInstructorOrAdmin("course"), createModule);
-router.get("/:moduleId", authMiddleware, isInstructorOrAdmin("course"), getModule);
-router.patch("/:moduleId", authMiddleware, isInstructorOrAdmin("course"), updateModule);
-router.delete("/:moduleId", authMiddleware, isInstructorOrAdmin("course"), deleteModule);
+router.post("/", authMiddleware, isCourseInstructor("course"), createModule);
+router.get("/:moduleId", authMiddleware, isCourseInstructor("course"), getModule);
+router.patch("/:moduleId", authMiddleware, isCourseInstructor("course"), updateModule);
+router.delete("/:moduleId", authMiddleware, isCourseInstructor("course"), deleteModule);
 
 
 

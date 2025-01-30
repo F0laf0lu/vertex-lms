@@ -1,12 +1,19 @@
 const {status} = require("http-status")
 const pool = require("../db/init");
-const ApiError = require("../utils/error.util");
-const {createCourseService, getCourseById} = require("../services/course.service")
+const {createCourseService, 
+        getAllCoursesService,
+        getCourseService, 
+        updateCourseService, 
+        deleteCourseService} = require("../services/course.service")
+
+const {uploadToS3}  = require("../middlewares/upload");
 
 const createCourse = async (req, res, next) => {
     try {       
-        // console.log(req)
-        // console.log(req.file)
+        if (req.file) {
+            const coverImage = await uploadToS3(req.file)
+            req.body.coverImage = coverImage
+        }
         const newCourse = await createCourseService(req.user.id, req.body)
         return res.status(status.CREATED).json({
             success: true,
@@ -20,8 +27,7 @@ const createCourse = async (req, res, next) => {
 
 const getAllCourses = async(req, res, next)=>{
     try {
-        const result = await pool.query("SELECT * FROM course")
-        const courses = result.rows
+        const courses = await getAllCoursesService();
         res.status(status.OK).json({
             success: true,
             message: "All courses fetched successfully",
@@ -32,16 +38,10 @@ const getAllCourses = async(req, res, next)=>{
     }
 }
 
-
 const getCourse = async(req, res, next)=>{
     try {
         const { courseId } = req.params;
-        const result = await pool.query("SELECT * FROM course WHERE id=$1", [courseId]);
-        
-        if (result.rows.length === 0) {
-            throw new ApiError(status.NOT_FOUND, "Course not found");
-        }
-        const course = result.rows[0]
+        const course = await getCourseService(courseId);
         res.status(status.OK).json({
             success:true,
             message: "Course details fetched",
@@ -52,40 +52,52 @@ const getCourse = async(req, res, next)=>{
     }
 }
 
-
-const updateCourse = async(req, res, next)=>{
+const updateCourse = async (req, res, next) => {
     try {
         const { courseId } = req.params;
-        const fields = [];
-        const data = [];
-        Object.entries(req.body).map((entry, index) => {
-            fields.push(`${entry[0]}=$${index + 1}`);
-            data.push(entry[1]);
-        });
-        if (fields.length === 0) {
-            throw new ApiError(status.BAD_REQUEST, "No fields to update");
-        } 
-        data.push(courseId);
-        const updateQuery = `UPDATE course SET ${fields.join(", ")} WHERE id = $${fields.length + 1} RETURNING *`;
-        const updateResult = await pool.query(updateQuery, data)
-        return res.status(status.OK).json({
+        const updatedCourse = await updateCourseService(courseId, req.body);
+        res.status(status.OK).json({
             success: true,
-            data: updateResult.rows[0],
+            message: "Course updated successfully",
+            data: updatedCourse,
         });
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
+};
 
+// const updateCourse1 = async(req, res, next)=>{
+//     try {
+//         const { courseId } = req.params;
+//         const fields = [];
+//         const data = [];
+//         Object.entries(req.body).map((entry, index) => {
+//             fields.push(`${entry[0]}=$${index + 1}`);
+//             data.push(entry[1]);
+//         });
+//         if (fields.length === 0) {
+//             throw new ApiError(status.BAD_REQUEST, "No fields to update");
+//         } 
+//         data.push(courseId);
+//         const updateQuery = `UPDATE course SET ${fields.join(", ")} WHERE id = $${fields.length + 1} RETURNING *`;
+//         const updateResult = await pool.query(updateQuery, data)
+//         return res.status(status.OK).json({
+//             success: true,
+//             data: updateResult.rows[0],
+//         });
+//     } catch (error) {
+//         next(error)
+//     }
+// }
 
 const deleteCourse = async(req, res, next)=>{
     try {
         const { courseId } = req.params;
-        await pool.query("DELETE FROM course WHERE id=$1", [id]);
+        const response = await deleteCourseService(courseId);
         return res.status(status.NO_CONTENT).json({
             success: true,
-            message: "Course deleted successfully",
-            data: {},
+            message: response.message,
+            data: {}
         });
     } catch (error) {
         next(error)

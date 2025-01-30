@@ -9,7 +9,7 @@ const errorConverter = (err, req, res, next) => {
         const statusCode = error.statusCode || status.INTERNAL_SERVER_ERROR;
         const message = error.message || status[statusCode];
         error = new ApiError(statusCode, message, false, err.stack);
-    }
+    }    
     next(error);
 };
 
@@ -20,10 +20,7 @@ const errorHandler = (err, req, res, next) => {
         statusCode = status.INTERNAL_SERVER_ERROR;
         message = status[status.INTERNAL_SERVER_ERROR];
     }
-
     res.locals.errorMessage = err.message;
-
-    
     if (config.env === "development") {
         logger.error(`${req.method} ${req.url} - ${err.message}`, { stack: err.stack });
     }

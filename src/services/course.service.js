@@ -1,48 +1,46 @@
 const pool = require("../db/init");
 const ApiError = require("../utils/error.util");
-const multer = require("multer");
-const upload = multer({ dest: "uploads/" });
-
-
 
 const createCourseService = async (userId, courseData) => {
-    const { name, description, difficulty, ...rest } = courseData;
-    const instructorResult = await pool.query('SELECT id FROM instructors WHERE "user" = $1', [
-        userId,
-    ]);
-    if (instructorResult.rows.length === 0) {
-        throw new ApiError(400, "Instructor not found");
-    }
-    const result = await pool.query(
-        "INSERT INTO course(name, description, difficulty, instructor) VALUES($1, $2, $3, $4) RETURNING *",
-        [name, description, difficulty, instructorResult.rows[0].id]
-    );
+    const client = await pool.connect();
+    try {
+        const { name, description, difficulty, ...rest } = courseData;
 
-    const newCourse = result.rows[0];
-    if (Object.keys(rest).length > 0) {
-        const updates = [];
-        const values = [newCourse.id];
-        let index = 2;
+        const instructorQuery = 'SELECT id FROM instructors WHERE "user" = $1';
+        const instructorResult = await client.query(instructorQuery, [userId]);
+
+        if (instructorResult.rows.length === 0) {
+            throw new ApiError(400, "Instructor not found");
+        }
+        const instructorId = instructorResult.rows[0].id;
+
+        const fields = ["name", "description", "difficulty", "instructor"];
+        const values = [name, description, difficulty, instructorId];
+        const placeholders = fields.map((_, i) => `$${i + 1}`);
 
         for (const [key, value] of Object.entries(rest)) {
-            updates.push(`${key} = $${index}`);
+            fields.push(key);
             values.push(value);
-            index++;
+            placeholders.push(`$${values.length}`);
         }
 
-        const updateQuery = `UPDATE course SET ${updates.join(", ")} WHERE id = $1 RETURNING *`;
-        const updateResult = await pool.query(updateQuery, values);
-        return updateResult.rows[0];
+        const insertQuery = `INSERT INTO course(${fields.join(", ")}) VALUES(${placeholders.join(", ")}) RETURNING *`;
+        const result = await client.query(insertQuery, values);
+        return result.rows[0];
+    } catch (error) {
+        throw error;
+    } finally {
+        client.release();
     }
-    return newCourse;
 };
 
-const getAllCourses = async () => {
+
+const getAllCoursesService = async () => {
     const result = await pool.query("SELECT * FROM course");
     return result.rows;
 };
 
-const getCourseById = async (courseId) => {
+const getCourseService = async (courseId) => {
     const result = await pool.query("SELECT * FROM course WHERE id=$1", [courseId]);
     if (result.rows.length === 0) {
         throw new ApiError(404, "Course not found");
@@ -50,32 +48,36 @@ const getCourseById = async (courseId) => {
     return result.rows[0];
 };
 
-const updateCourse = async (courseId, courseData) => {
+const updateCourseService = async (courseId, courseData) => {
     const fields = [];
-    const data = [];
+    const values = [];
+
     Object.entries(courseData).forEach((entry, index) => {
         fields.push(`${entry[0]}=$${index + 1}`);
-        data.push(entry[1]);
+        values.push(entry[1]);
     });
+
     if (fields.length === 0) {
         throw new ApiError(400, "No fields to update");
     }
-    data.push(courseId);
+    values.push(courseId);
     const updateQuery = `UPDATE course SET ${fields.join(", ")} WHERE id = $${
         fields.length + 1
     } RETURNING *`;
-    const updateResult = await pool.query(updateQuery, data);
+    const updateResult = await pool.query(updateQuery, values);
     return updateResult.rows[0];
 };
 
-const deleteCourse = async (courseId) => {
+const deleteCourseService = async (courseId) => {
     await pool.query("DELETE FROM course WHERE id=$1", [courseId]);
+
+    return { message: "Course deleted successfully" };
 };
 
 module.exports = {
     createCourseService,
-    getAllCourses,
-    getCourseById,
-    updateCourse,
-    deleteCourse,
+    getAllCoursesService,
+    getCourseService,
+    updateCourseService,
+    deleteCourseService,
 };

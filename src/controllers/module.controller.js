@@ -3,41 +3,35 @@ const pool = require("../db/init");
 const ApiError = require("../utils/error.util");
 
 
-const createModule = async(req, res, next)=>{
+const createModule = async (req, res, next) => {
     try {
-            const {courseId} = req.params
-            const { user } = req;
-            const { name, description} = req.body;
-            const courseResult = await pool.query("SELECT * FROM course WHERE id=$1", [courseId]);
-            if (courseResult.rows.length === 0) {
-                throw new ApiError(status.NOT_FOUND, "Course not found");
-            }
-            const profileResult = await pool.query('SELECT * FROM instructors WHERE "user"=$1', [
-                user.id,
-            ]);
-            if (profileResult.rows.length === 0) {
-                throw new ApiError(status.NOT_FOUND, "User profile not found");
-            }
+        const { courseId } = req.params;
+        const { user } = req;
+        const { name, description } = req.body;
 
-            const course = courseResult.rows[0];
-            const instructorId = profileResult.rows[0].id;
-            if (instructorId !== course.instructor && !user.isadmin) {
-                throw new ApiError(status.FORBIDDEN, "Permission denied");
-            }
+        // Check if the course exists
+        const courseResult = await pool.query("SELECT * FROM course WHERE id=$1", [courseId]);
+        if (courseResult.rows.length === 0) {
+            throw new ApiError(status.NOT_FOUND, "Course not found");
+        }
         
-            const moduleResult = await pool.query(
-                "INSERT INTO module(name, description, course) VALUES($1, $2, $3) RETURNING *",
-                [name, description, courseId]
-            );
+        const orderResult = await pool.query(
+            "SELECT COUNT(*) AS module_count FROM module WHERE course=$1",
+            [courseId]
+        );
+        const moduleOrder = parseInt(orderResult.rows[0].module_count, 10) + 1;
+        const moduleResult = await pool.query(
+            'INSERT INTO module(name, description, course, "order") VALUES($1, $2, $3, $4) RETURNING *',
+            [name, description, courseId, moduleOrder]
+        );
         return res.status(status.CREATED).json({
             success: true,
             data: moduleResult.rows[0],
         });
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
-
+};
 
 const getModules = async(req, res, next)=>{
     try {
@@ -57,8 +51,6 @@ const getModules = async(req, res, next)=>{
     } catch (error) {
         next(error)
     }
-
-
 }
 
 const getModule = async(req, res, next)=>{
@@ -131,7 +123,6 @@ const deleteModule = async(req, res, next)=>{
             message: "Course deleted successfully",
             data: {},
         });
-
     } catch (error) {
         next(error)
     }

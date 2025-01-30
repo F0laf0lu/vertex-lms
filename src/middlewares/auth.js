@@ -59,20 +59,12 @@ const isStudent = (req, res, next) => {
     next();
 };
 
-const isInstructorOrAdmin = (resourceType) => {
+const isCourseInstructor = (resourceType) => {
     return async (req, res, next) => {
         try {
             const { user } = req;
             const resourceId = req.params[`${resourceType}Id`];
-
-            // Allow admins to proceed without further checks
-            // if (user.isadmin) {
-            //     console.log("Permission allowed: Admin access");
-            //     return next();
-            // }
-
             let courseId;
-
             if (resourceType === "module") {
                 const moduleResult = await pool.query("SELECT course FROM module WHERE id=$1", [
                     resourceId,
@@ -128,5 +120,5 @@ module.exports = {
     isInstructor,
     isStudent,
     isadmin,
-    isInstructorOrAdmin
+    isCourseInstructor
 }
