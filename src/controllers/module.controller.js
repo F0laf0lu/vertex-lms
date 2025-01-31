@@ -1,132 +1,86 @@
 const { status } = require("http-status");
-const pool = require("../db/init");
-const ApiError = require("../utils/error.util");
+const moduleService = require("../services/module.service");
 
 
 const createModule = async (req, res, next) => {
     try {
         const { courseId } = req.params;
-        const { user } = req;
         const { name, description } = req.body;
 
-        // Check if the course exists
-        const courseResult = await pool.query("SELECT * FROM course WHERE id=$1", [courseId]);
-        if (courseResult.rows.length === 0) {
-            throw new ApiError(status.NOT_FOUND, "Course not found");
-        }
-        
-        const orderResult = await pool.query(
-            "SELECT COUNT(*) AS module_count FROM module WHERE course=$1",
-            [courseId]
-        );
-        const moduleOrder = parseInt(orderResult.rows[0].module_count, 10) + 1;
-        const moduleResult = await pool.query(
-            'INSERT INTO module(name, description, course, "order") VALUES($1, $2, $3, $4) RETURNING *',
-            [name, description, courseId, moduleOrder]
-        );
+        await moduleService.checkCourseExists(courseId);
+        const newModule = await moduleService.createModule(courseId, { name, description });
+
         return res.status(status.CREATED).json({
             success: true,
-            data: moduleResult.rows[0],
+            data: newModule,
         });
     } catch (error) {
         next(error);
     }
 };
 
-const getModules = async(req, res, next)=>{
+const getModules = async (req, res, next) => {
     try {
         const { courseId } = req.params;
-        const courseResult = await pool.query("SELECT * FROM course WHERE id=$1", [courseId]);
-        if (courseResult.rows.length === 0) {
-            throw new ApiError(status.NOT_FOUND, "Course not found");
-        }
-        const course = courseResult.rows[0];
-        const result = await pool.query("SELECT * FROM module WHERE course=$1", [course.id]);
-        const modules = result.rows
+        await moduleService.checkCourseExists(courseId);
+        const modules = await moduleService.getModulesByCourse(courseId);
+
         res.status(status.OK).json({
             success: true,
             message: "Modules fetched for course",
             data: modules,
         });
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
+};
 
-const getModule = async(req, res, next)=>{
+
+const getModule = async (req, res, next) => {
     try {
-        const { courseId, moduleId } = req.params;
-        const courseResult = await pool.query("SELECT * FROM course WHERE id=$1", [courseId]);
-        if (courseResult.rows.length === 0) {
-            throw new ApiError(status.NOT_FOUND, "Course not found");
-        }
-        const result = await pool.query("SELECT * FROM module WHERE id=$1", [moduleId]);
-        if (result.rows.length === 0) {
-            throw new ApiError(status.NOT_FOUND, "Module not found");
-        }
-        const module = result.rows[0];
+        const { moduleId } = req.params;
+        const module = await moduleService.getModuleById(moduleId);
         res.status(status.OK).json({
             success: true,
             message: "Module details fetched",
             data: module,
         });
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
+};
 
-
-const updateModule = async(req, res, next)=>{
+const updateModule = async (req, res, next) => {
     try {
         const { moduleId } = req.params;
-        const result = await pool.query("SELECT * FROM module WHERE id=$1", [moduleId]);
-        if (result.rows.length === 0) {
-            throw new ApiError(status.NOT_FOUND, "Module not found");
-        }
-        if (Object.keys(req.body).length === 0) throw new ApiError(status.BAD_REQUEST, "No fields to update for module");
-        ;
-        const fields = [];
-        const values = [];
-        Object.entries(req.body).map((entry, index) => {
-            fields.push(`${entry[0]}=$${index + 1}`);
-            values.push(entry[1]);
-        });
-        if (fields.length === 0) {
-            throw new ApiError(status.BAD_REQUEST, "No fields to update");
-        }
-        values.push(moduleId);
-        const updateQuery = `UPDATE module SET ${fields.join(", ")} WHERE id = $${fields.length + 1} RETURNING *`;
-        const updateResult = await pool.query(updateQuery, values);
-        if (updateResult.rows.length === 0) {
-            throw new ApiError(status.INTERNAL_SERVER_ERROR, "Failed to update module");
-        }
+        const updateFields = req.body;
+
+        const updatedModule = await moduleService.updateModuleById(moduleId, updateFields);
+
         return res.status(status.OK).json({
             success: true,
-            data: updateResult.rows[0],
+            data: updatedModule,
         });
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
+};
 
 
-const deleteModule = async(req, res, next)=>{
+const deleteModule = async (req, res, next) => {
     try {
         const { moduleId } = req.params;
-        const result = await pool.query("SELECT * FROM module WHERE id=$1", [moduleId]);
-        if (result.rows.length === 0) {
-            throw new ApiError(status.NOT_FOUND, "Module not found");
-        }
-        await pool.query("DELETE FROM module WHERE id=$1", [moduleId]);
+        await moduleService.deleteModuleById(moduleId);
+
         return res.status(status.NO_CONTENT).json({
             success: true,
-            message: "Course deleted successfully",
+            message: "Module deleted successfully",
             data: {},
         });
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
+};
 
 module.exports = {
     createModule,

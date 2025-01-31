@@ -104,7 +104,6 @@ const isCourseInstructor = (resourceType) => {
             if (instructorId !== courseInstructor) {
                 throw new ApiError(status.FORBIDDEN, "Access denied: Not the course instructor.");
             }
-            console.log("Permission allowed instructor")
             next();
         } catch (error) {
             next(error);

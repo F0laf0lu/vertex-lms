@@ -20,9 +20,21 @@ router.post("/",
     createCourse);
 
 router.get('/', getAllCourses);
+
 router.get("/:courseId", getCourse);
-router.patch("/:courseId", authMiddleware, isCourseInstructor("course"),  updateCourse);
-router.delete("/:courseId", authMiddleware, deleteCourse);
+
+router.patch("/:courseId", 
+            authMiddleware, 
+            isCourseInstructor("course"),
+            validateRequest(updateCourseSchema),
+            updateCourse
+        );
+
+
+router.delete("/:courseId", 
+    authMiddleware, 
+    isCourseInstructor("course"), 
+    deleteCourse);
 
 
 module.exports = router
