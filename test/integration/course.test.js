@@ -3,8 +3,8 @@ const { faker } = require("@faker-js/faker");
 const { status } = require("http-status");
 const app = require("../../src/app");
 const pool = require("../../src/db/init");
-const {admin, instructorOne, createUser, studentOne} = require("../fixtures/user.fixture")
-const generateToken = require("../fixtures/token.fixture")
+const {admin, instructorOne, createUser, studentOne, instructorTwo} = require("../fixtures/user.fixture")
+const tokenFixtures = require("../fixtures/token.fixture")
 
 
 describe('Course Routes', () => { 
@@ -12,7 +12,7 @@ describe('Course Routes', () => {
 
     beforeAll(async () => {
         const user = await createUser(instructorOne)
-        authToken = generateToken(user);
+        authToken = tokenFixtures.instructorOneToken
     });
 
     afterAll(async () => {
@@ -38,15 +38,14 @@ describe('Course Routes', () => {
                     .set("Authorization", `Bearer ${authToken}`)
                     .send(newCourse)
                     .expect(status.CREATED);
-
                     expect(res.body.data).toBeDefined()
                     expect(res.body.data.name).toBe(newCourse.name);
                     expect(res.body.data.difficulty).toBe(newCourse.difficulty);
         })
 
         test('should not create course if user is not an instructor', async() => { 
-            let user = await createUser(studentOne)
-            let token = generateToken(user)
+            await createUser(studentOne)
+            let token = tokenFixtures.studentOneToken
             await request(app)
                 .post("/courses")
                 .set("Authorization", `Bearer ${token}`)
@@ -64,20 +63,116 @@ describe('Course Routes', () => {
 
 
     describe('GET courses', () => { 
-        beforeEach(() => {
+        beforeEach(async() => {
             newCourse = {
                 name: faker.lorem.word(5),
                 description: faker.lorem.sentence(),
                 difficulty: faker.helpers.arrayElement(["beginner", "intermediate", "advanced"]),
             };
+        // Create a course to test retrieval
+        const res = await request(app)
+            .post("/courses")
+            .set("Authorization", `Bearer ${authToken}`)
+            .send(newCourse)
+            .expect(status.CREATED);
+
+            courseId = res.body.data.id;
         });
 
         test('should get all course', async() => { 
             const res = await request(app).get('/courses')
                     .expect(status.OK)
-                    
         })
 
+        test("should retrieve a specific course", async () => {
+            const res = await request(app).get(`/courses/${courseId}`).expect(status.OK);
+
+            expect(res.body.data).toBeDefined();
+            expect(res.body.data.id).toBe(courseId);
+            expect(res.body.data.name).toBe(newCourse.name);
+        });
+
+
+        test("should return 404 if course not found", async () => {
+            const invalidCourseId = "47d3f0e3-dd86-4ff5-98a6-26f56ecca369";
+            const res = await request(app).get(`/courses/${invalidCourseId}`).expect(status.NOT_FOUND);
+
+            expect(res.body.message).toBe("Course not found");
+        });
+
     })
+
+
+    describe("PUT /courses/:id", () => {
+        let courseId;
+
+        beforeEach(async () => {
+            newCourse = {
+                name: faker.lorem.word(5),
+                description: faker.lorem.sentence(),
+                difficulty: faker.helpers.arrayElement(["beginner", "intermediate", "advanced"]),
+            };
+
+            // Create a course to test update
+            const res = await request(app)
+                .post("/courses")
+                .set("Authorization", `Bearer ${authToken}`)
+                .send(newCourse)
+                .expect(status.CREATED);
+
+            courseId = res.body.data.id; // Get the course ID for update
+        });
+
+        test("should update course if user is the course owner", async () => {
+            const updatedCourse = {
+                name: faker.lorem.word(5),
+                description: faker.lorem.sentence(),
+                difficulty: faker.helpers.arrayElement(["beginner", "intermediate", "advanced"]),
+            };
+
+            const res = await request(app)
+                .patch(`/courses/${courseId}`)
+                .set("Authorization", `Bearer ${authToken}`)
+                .send(updatedCourse)
+                .expect(status.OK);
+
+            expect(res.body.data.name).toBe(updatedCourse.name);
+            expect(res.body.data.description).toBe(updatedCourse.description);
+        });
+
+        test("should reject update if user is not the course owner", async () => {
+            let user = await createUser(instructorTwo);
+            let token = tokenFixtures.instructorTwoToken;
+
+            const updatedCourse = {
+                name: faker.lorem.word(5),
+                description: faker.lorem.sentence(),
+                difficulty: faker.helpers.arrayElement(["beginner", "intermediate", "advanced"]),
+            };
+
+            const res = await request(app)
+                .patch(`/courses/${courseId}`)
+                .set("Authorization", `Bearer ${token}`)
+                .send(updatedCourse)
+                .expect(status.FORBIDDEN);
+
+            expect(res.body.message).toBe("Access denied: Not the course instructor.");
+        });
+
+        test("should not update course if unauthenticated", async () => {
+            const updatedCourse = {
+                name: faker.lorem.word(5),
+                description: faker.lorem.sentence(),
+                difficulty: faker.helpers.arrayElement(["beginner", "intermediate", "advanced"]),
+            };
+
+            await request(app)
+                .patch(`/courses/${courseId}`)
+                .send(updatedCourse)
+                .expect(status.UNAUTHORIZED);
+        });
+    });
+
+
 
 });

@@ -2,10 +2,12 @@
 const { faker } = require("@faker-js/faker");
 const pool = require("../../src/db/init");
 const bcrypt = require("bcryptjs");
+const { randomUUID } = require("crypto");
 
 
 
 const admin = {
+    id: randomUUID(),
     email: faker.internet.email(),
     firstname: faker.person.firstName(),
     lastname: faker.person.lastName(),
@@ -14,6 +16,7 @@ const admin = {
 };
 
 const instructorOne = {
+    id: randomUUID(),
     email: faker.internet.email(),
     firstname: faker.person.firstName(),
     lastname: faker.person.lastName(),
@@ -22,6 +25,7 @@ const instructorOne = {
 };
 
 const instructorTwo = {
+    id: randomUUID(),
     email: faker.internet.email(),
     firstname: faker.person.firstName(),
     lastname: faker.person.lastName(),
@@ -30,6 +34,7 @@ const instructorTwo = {
 };
 
 const studentOne = {
+    id: randomUUID(),
     email: faker.internet.email(),
     firstname: faker.person.firstName(),
     lastname: faker.person.lastName(),
@@ -38,6 +43,7 @@ const studentOne = {
 };
 
 const studentTwo = {
+    id: randomUUID(),
     email: faker.internet.email(),
     firstname: faker.person.firstName(),
     lastname: faker.person.lastName(),
@@ -55,15 +61,19 @@ const createUser = async(userDetails)=>{
         data.push(`$${(value=index)}`);
         index++;
     });
+    let profileId;
     const query = `INSERT INTO users(${fields.join(",")}) VALUES(${data.join(",")}) RETURNING id, email, firstname, lastname, isinstructor, isverified`;
     const result = await pool.query(query, values)
     if (result.rows[0].isinstructor) {
-        await pool.query('INSERT INTO instructors("user") VALUES($1)', [result.rows[0].id]);
+        const profile = await pool.query('INSERT INTO instructors("user") VALUES($1) RETURNING id', [result.rows[0].id]);
+        profileId = profile.rows[0].id
+
     } else {
-        await pool.query('INSERT INTO students("user") VALUES($1)', [result.rows[0].id]);
+        const profile = await pool.query('INSERT INTO students("user") VALUES($1) RETURNING id', [result.rows[0].id]);
+        profileId = profile.rows[0].id;
     }
 
-    return result.rows[0]
+    return result.rows[0], profileId
 }
 
 

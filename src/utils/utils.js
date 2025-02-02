@@ -12,7 +12,15 @@ const generateCode = (length = 32, numeric = false) => {
     return code.padStart(length, "0");
 };
 
+const estimateReadingTime = (text) => {
+    const wordsPerMinute = 200; 
+    const words = text.split(/\s+/).length;
+    return Math.ceil((words / wordsPerMinute) * 60); 
+};
+
+
 
 module.exports = {
-    generateCode
+    generateCode,
+    estimateReadingTime
 }

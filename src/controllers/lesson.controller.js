@@ -1,13 +1,13 @@
 const { status } = require("http-status");
 const pool = require("../db/init");
 const ApiError = require("../utils/error.util");
-
+const {estimateReadingTime} = require("../utils/utils");
 
 
 const getLessons = async(req,res,next)=>{
     try {
         const {moduleId} = req.params
-        const moduleResult = await pool.query('SELECT id FROM module WHERE id=$1', [moduleId])
+        const moduleResult = await pool.query('SELECT id FROM module WHERE id=$1', [moduleId])  
         if (moduleResult.rows.length === 0) {
             throw new ApiError(status.NOT_FOUND, "Module not found");
         }
@@ -32,29 +32,36 @@ const getLessons = async(req,res,next)=>{
 const createLesson = async (req, res, next) => {
     try {
         const { moduleId } = req.params;
-        const { name } = req.body;
+        const { name, lessontext, duration } = req.body;
+        const lessonvideo = req.file ? `/uploads/${req.file.filename}` : null;
 
         const moduleResult = await pool.query("SELECT id FROM module WHERE id=$1", [moduleId]);
         if (moduleResult.rows.length === 0) {
             throw new ApiError(status.NOT_FOUND, "Module not found");
         }
-
-        const lessonResult = await pool.query(
-            "INSERT INTO lessons (name, module) VALUES ($1, $2) RETURNING *",
-            [name, moduleId]
+        const orderResult = await pool.query(
+            "SELECT COUNT(*) AS lesson_count FROM lessons WHERE module=$1",
+            [moduleId]
         );
+        const lessonOrder = parseInt(orderResult.rows[0].lesson_count, 10) + 1;
+        const query = `
+            INSERT INTO lessons (name, module, lessonvideo, lessontext, duration, "order")
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *;
+        `;
+        const values = [name, moduleId, lessontext, lessonvideo, duration, lessonOrder];
+        const { rows } = await pool.query(query, values);
 
+        const lesson = rows[0];
         res.status(status.CREATED).json({
             success: true,
             message: "Lesson created successfully",
-            data: lessonResult.rows[0],
+            data: lesson,
         });
     } catch (error) {
         next(error);
     }
 };
-
-
 
 const getLesson = async (req, res, next) => {
     try {
@@ -75,47 +82,64 @@ const getLesson = async (req, res, next) => {
             success: true,
             message: "Lesson fetched successfully",
             data: lessonResult.rows[0],
-        });
+        }); 
     } catch (error) {
         next(error); 
     }
 };
 
-
 const updateLesson = async (req, res, next) => {
     try {
         const { lessonId } = req.params;
-        const result = await pool.query("SELECT * FROM lessons WHERE id=$1", [lessonId]);
-        if (result.rows.length === 0) {
+        const { name, lessontext, duration, order } = req.body;
+        const lessonvideo = req.file ? `/uploads/${req.file.filename}` : null;
+
+        // Fetch existing lesson
+        const lessonResult = await pool.query("SELECT * FROM lessons WHERE id=$1", [lessonId]);
+        if (lessonResult.rows.length === 0) {
             throw new ApiError(status.NOT_FOUND, "Lesson not found");
         }
-        if (Object.keys(req.body).length === 0) {
-            throw new ApiError(status.BAD_REQUEST, "No fields to update for lesson");
-        }
-        const fields = [];
-        const values = [];
-        Object.entries(req.body).forEach((entry, index) => {
-            fields.push(`${entry[0]}=$${index + 1}`);
-            values.push(entry[1]);
-        });
-        values.push(lessonId);
-        const updateQuery = `UPDATE lessons SET ${fields.join(", ")} WHERE id = $${
-            fields.length + 1
-        } RETURNING *`;
-        const updateResult = await pool.query(updateQuery, values);
 
-        if (updateResult.rows.length === 0) {
-            throw new ApiError(status.INTERNAL_SERVER_ERROR, "Failed to update lesson");
+        // Create an object with only the provided fields
+        const fieldsToUpdate = {
+            name,
+            lessontext,
+            duration,
+            order,
+            lessonvideo,
+            updatedAt: new Date(), 
+        };
+
+        // Filter out undefined/null fields
+        const entries = Object.entries(fieldsToUpdate).filter(([_, value]) => value !== undefined);
+
+        if (entries.length === 0) {
+            return res.status(status.BAD_REQUEST).json({ message: "No fields provided for update" });
         }
-        return res.status(status.OK).json({
+
+        // Construct the dynamic query
+        const setClause = entries.map(([key], i) => `"${key}"=$${i + 1}`).join(", ");
+        const values = entries.map(([_, value]) => value);
+        values.push(lessonId);
+
+        const query = `
+            UPDATE lessons
+            SET ${setClause}
+            WHERE id=$${values.length}
+            RETURNING *;
+        `;
+
+        const { rows } = await pool.query(query, values);
+
+        res.status(status.OK).json({
             success: true,
-            data: updateResult.rows[0],
+            message: "Lesson updated successfully",
+            data: rows[0],
         });
     } catch (error) {
         next(error);
     }
 };
-
 
 const deleteLesson = async (req, res, next) => {
     try {

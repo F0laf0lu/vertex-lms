@@ -50,8 +50,36 @@ const removeFromS3 = async (fileUrl) => {
     }
 };
 
+const lessonStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "uploads/"); 
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`);
+    },
+});
+
+
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = ["video/mp4", "video/mkv", "video/webm"];
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error("Invalid file type. Only MP4, MKV, and WebM are allowed."));
+    }
+};
+
+const uploadLesson = multer({
+    storage:lessonStorage,
+    limits: { fileSize: 100 * 1024 * 1024 },
+    fileFilter,
+});
+
 module.exports = {
     uploadCoverImage,
     uploadToS3,
-    removeFromS3
+    removeFromS3,
+    uploadLesson
 }
+
+
