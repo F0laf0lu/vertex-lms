@@ -4,7 +4,7 @@ const ApiError = require("../utils/error.util");
 const bcrypt = require("bcryptjs");
 const JWT = require("jsonwebtoken");
 const config = require("../config/config");
-const { sendVerificationEmail } = require("../services/email.service");
+const { sendVerificationEmail, sendPasswordResetEmail } = require("../services/email.service");
 const logger = require("../config/logger");
 const { registerService, loginService } = require("../services/auth.service");
 
@@ -81,18 +81,61 @@ const confirmEmail = async (req, res, next) => {
     }
 };
 
+const forgotPassword = async (req, res, next) => {
+    try {
+        const { email } = req.body;
 
-const logout = (req, res)=>{
-    const {refreshToken} = req.body
-}
+        // Check if user exists
+        const userResult = await pool.query("SELECT id FROM users WHERE email=$1", [email]);
+        if (userResult.rows.length === 0) {
+            throw new ApiError(status.NOT_FOUND, "User not found");
+        }
+        const userId = userResult.rows[0].id;
+        // Generate JWT reset token (expires in 15 minutes)
+        const resetToken = JWT.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "15m" });
+        // Send reset link via email
+        sendPasswordResetEmail(email, resetToken)
+        res.status(status.OK).json({
+            success: true,
+            message: "Password reset link sent successfully.",
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
-// resend email verification 
-// change password
+
+const resetPassword = async (req, res, next) => {
+    try {
+        const { token } = req.params;
+        const { newPassword } = req.body;
+        let decoded;
+        try {
+            decoded = JWT.verify(token, process.env.JWT_SECRET);
+        } catch (error) {
+            throw new ApiError(status.UNAUTHORIZED, "Invalid or expired token");
+        }
+        const userId = decoded.userId;
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        await pool.query("UPDATE users SET password=$1 WHERE id=$2", [hashedPassword, userId]);
+        res.status(status.OK).json({
+            success: true,
+            message: "Password reset successfully. You can now log in.",
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 
 
 module.exports = {
     register,
     login,
     confirmEmail,
-    createAdmin
+    createAdmin,
+    resetPassword,
+    forgotPassword
 };

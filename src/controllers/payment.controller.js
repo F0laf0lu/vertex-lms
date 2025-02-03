@@ -3,8 +3,41 @@ const pool = require("../db/init");
 const ApiError = require("../utils/error.util");
 const { generateCode } = require("../utils/utils");
 const crypto = require("crypto");
+const { initializePayment, processPaystackWebhook } = require("../services/payment.service");
+const status = require("http-status");
 
 const makePayment = async (req, res, next) => {
+    try {
+        const { id, email } = req.user;
+        const { courseId } = req.body;
+
+        const { payment, paystackUrl } = await initializePayment({ userId: id, email, courseId });
+
+        return res.status(status.OK).json({
+            success: true,
+            message: "Payment initialized",
+            data: { payment, paystackUrl },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const paystackWebhook = async (req, res, next) => {
+    try {
+        const result = await processPaystackWebhook(req);
+        res.status(status.OK).json({
+            success: true,
+            message: result.message,
+            data: result.payment || null,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+const makePayment1 = async (req, res, next) => {
     
     try {
         const { id, email } = req.user;
@@ -66,9 +99,7 @@ const makePayment = async (req, res, next) => {
         next(error)
     }
 }
-
-
-const paystackWebhook = async(req, res, next) => {
+const paystackWebhook1 = async(req, res, next) => {
     const secret = process.env.PAYSTACK_SK;
     try {
         const signature = req.headers["x-paystack-signature"];
@@ -106,7 +137,6 @@ const paystackWebhook = async(req, res, next) => {
     } catch (error) {
         next(error)
     }
-
 }
 
 
