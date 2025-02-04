@@ -10,7 +10,7 @@ exports.up = (pgm) => {
         "state",
         "country",
         "linkedin",
-        "total_students"
+        "total_students",
     ]);
 
     // Add new relevant columns
