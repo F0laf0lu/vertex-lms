@@ -16,9 +16,9 @@ module.exports = {
         USER: isTestEnv ? process.env.TEST_DB_USER : process.env.DB_USER,
     },
     jwt: {
-        secret: process.env.JWT_SECRET,
-        accessExpirationMinutes: process.env.JWT_ACCESS_EXPIRATION_MINUTES,
-        refreshExpirationDays: process.env.JWT_REFRESH_EXPIRATION_DAYS,
+        secret: process.env.JWT_SECRET || 'my-secret-key',
+        accessExpirationMinutes: process.env.JWT_ACCESS_EXPIRATION_MINUTES || '10m',
+        refreshExpirationDays: process.env.JWT_REFRESH_EXPIRATION_DAYS || '15d',
     },
     email: {
         smtp: {
