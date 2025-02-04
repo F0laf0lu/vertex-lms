@@ -1,7 +1,7 @@
 exports.up = (pgm) => {
     // Drop unnecessary columns
     pgm.dropColumns("instructors", [
-        "dateOfNBirth",
+        "dateOfBirth",
         "reviews",
         "phoneNumber",
         "gender",
