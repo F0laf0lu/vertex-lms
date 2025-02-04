@@ -4,7 +4,7 @@ const ApiError = require("../utils/error.util");
 const { generateCode } = require("../utils/utils");
 const crypto = require("crypto");
 const { initializePayment, processPaystackWebhook } = require("../services/payment.service");
-const status = require("http-status");
+
 
 const makePayment = async (req, res, next) => {
     try {

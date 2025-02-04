@@ -15,6 +15,7 @@ const moduleRouter = require('./routes/module.router')
 const lessonRouter = require('./routes/lesson.router')
 const paymentRouter = require('./routes/payment.router')
 const enrollRouter = require('./routes/enrollment.router')
+const instructorRouter = require('./routes/instructor.router')
 
 
 const app = express();
@@ -38,13 +39,14 @@ const specs = swaggerJsdoc({
 });
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(specs));
-app.use('/auth', authRoutes)
-app.use('/users', userRoutes)
+app.use('/auth', authRoutes);
+app.use('/users', userRoutes);
 app.use('/courses', courseRouter);
 app.use("/:courseId/modules", moduleRouter);
 app.use("/:courseId/modules/:moduleId/lessons", lessonRouter);
-app.use("/pay", paymentRouter)
-app.use("/enroll", enrollRouter)
+app.use("/pay", paymentRouter);
+app.use("/enroll", enrollRouter);
+app.use("/instructors", instructorRouter);
 
 
 

@@ -51,6 +51,15 @@ const studentTwo = {
     isinstructor: false,
 };
 
+const invalidTestUser = {
+    id: randomUUID(),
+    email: faker.internet.email(),
+    firstname: faker.person.firstName(),
+    lastname: faker.person.lastName(),
+    password: "securepassword123",
+    isinstructor: false,
+};
+
 const createUser = async(userDetails)=>{
     userDetails.password = await bcrypt.hash(userDetails.password, 10)
     const fields = Object.keys(userDetails)
@@ -72,7 +81,6 @@ const createUser = async(userDetails)=>{
         const profile = await pool.query('INSERT INTO students("user") VALUES($1) RETURNING id', [result.rows[0].id]);
         profileId = profile.rows[0].id;
     }
-
     return result.rows[0], profileId
 }
 
@@ -84,5 +92,6 @@ module.exports = {
     instructorTwo,
     studentOne,
     studentTwo,
-    createUser
+    createUser,
+    invalidTestUser
 }

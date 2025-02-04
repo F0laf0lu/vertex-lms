@@ -68,32 +68,39 @@ const confirmEmail = async (req, res, next) => {
     try {
         const payload = JWT.verify(token, config.jwt.secret);
         const { userId } = payload;
+        const userResult = await pool.query("SELECT isverified FROM users WHERE id=$1", [userId]);
+        if (userResult.rows.length === 0) {
+            throw new ApiError(status.BAD_REQUEST, "User not found.");
+        }
+        if (userResult.rows[0].isverified) {
+            throw new ApiError(status.BAD_REQUEST, "User is already verified.");
+        }
         const verifyUser = await pool.query(
-            "UPDATE USERS SET isverified=true WHERE id=$1 RETURNING id, email, isverified",
+            "UPDATE users SET isverified=true WHERE id=$1 RETURNING id, email, isverified",
             [userId]
         );
-        if (verifyUser.rowCount === 0) {
-            throw new ApiError(status.BAD_REQUEST, "User not found or already verified.");
-        }
-        res.status(status.OK).json({ success: true, message: "Email verified successfully."});
+        res.status(status.OK).json({
+            success: true,
+            message: "Email verified successfully.",
+            data: verifyUser.rows[0],
+        });
     } catch (error) {
         next(error);
     }
 };
 
+
 const forgotPassword = async (req, res, next) => {
     try {
         const { email } = req.body;
-
-        // Check if user exists
         const userResult = await pool.query("SELECT id FROM users WHERE email=$1", [email]);
         if (userResult.rows.length === 0) {
             throw new ApiError(status.NOT_FOUND, "User not found");
         }
-        const userId = userResult.rows[0].id;
-        // Generate JWT reset token (expires in 15 minutes)
-        const resetToken = JWT.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "15m" });
-        // Send reset link via email
+        const user = userResult.rows[0];
+        const resetToken = JWT.sign({ userId: user.id }, config.jwt.secret, {
+                    expiresIn: "1d",
+                });
         sendPasswordResetEmail(email, resetToken)
         res.status(status.OK).json({
             success: true,
@@ -107,13 +114,12 @@ const forgotPassword = async (req, res, next) => {
 
 const resetPassword = async (req, res, next) => {
     try {
-        const { token } = req.params;
-        const { newPassword } = req.body;
+        const { newPassword, token } = req.body;
         let decoded;
         try {
-            decoded = JWT.verify(token, process.env.JWT_SECRET);
+            decoded = JWT.verify(token, config.jwt.secret);
         } catch (error) {
-            throw new ApiError(status.UNAUTHORIZED, "Invalid or expired token");
+            throw new ApiError(status.BAD_REQUEST, "Invalid or expired token");
         }
         const userId = decoded.userId;
         const salt = await bcrypt.genSalt(10);
@@ -129,6 +135,39 @@ const resetPassword = async (req, res, next) => {
 };
 
 
+const requestVerificationEmail = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            throw new ApiError(status.BAD_REQUEST, "Email is required.");
+        }
+
+        const userResult = await pool.query("SELECT id, isverified FROM users WHERE email=$1", [
+            email,
+        ]);
+        if (userResult.rows.length === 0) {
+            throw new ApiError(status.NOT_FOUND, "User not found");
+        }
+        const user = userResult.rows[0];
+        if (user.id !== req.user.id) {
+            throw new ApiError(status.FORBIDDEN, "Permission denied");
+        }
+        if (user.isverified) {
+            res.status(status.OK).json({ message: "Your account is already verified." });
+            return;
+        }
+        const verifyToken = JWT.sign({ userId: user.id }, config.jwt.secret, {
+            expiresIn: "1d",
+        });
+        await sendVerificationEmail(email, verifyToken);
+        res.status(StatusCodes.OK).json({
+            message: "Verification email has been sent. Please check your inbox.",
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
 
 module.exports = {
@@ -137,5 +176,6 @@ module.exports = {
     confirmEmail,
     createAdmin,
     resetPassword,
-    forgotPassword
+    forgotPassword,
+    requestVerificationEmail
 };

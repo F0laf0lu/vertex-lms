@@ -6,6 +6,7 @@ const {
     createAdmin,
     forgotPassword,
     resetPassword,
+    requestVerificationEmail
 } = require("../controllers/auth.controller");
 const validateRequest = require("../validation/validation");
 const {
@@ -14,7 +15,7 @@ const {
     registerSchema,
     loginSchema,
 } = require("../validation/auth.validation");
-
+const {authMiddleware} = require("../middlewares/auth");
 
 
 const router = express.Router()
@@ -24,7 +25,8 @@ router.post("/register", validateRequest(registerSchema), register);
 router.post("/login", validateRequest(loginSchema), login);
 router.post('/verify-email', confirmEmail)
 router.post("/forgot-password", validateRequest(forgotPasswordSchema), forgotPassword);
-router.post("/reset-password/:token", validateRequest(resetPasswordSchema), resetPassword);
+router.post("/reset-password", validateRequest(resetPasswordSchema), resetPassword);
+router.post("/resend-verification", authMiddleware, requestVerificationEmail);
 
 
 

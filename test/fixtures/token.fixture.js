@@ -11,6 +11,14 @@ const generateToken = (userDetails)=>{
     return token
 }
 
+const generateExpiryToken = (userDetails) => {
+    const token = JWT.sign({ userId: userDetails.id }, config.jwt.secret, {
+        expiresIn: "1s",
+    });
+    return token;
+};
+
+
 const instructorOneToken = generateToken(instructorOne)
 const instructorTwoToken = generateToken(instructorTwo)
 const studentTwoToken = generateToken(studentTwo)
@@ -22,5 +30,6 @@ module.exports = {
     instructorOneToken,
     instructorTwoToken,
     studentOneToken,
-    studentTwoToken
+    studentTwoToken,
+    generateExpiryToken
 }

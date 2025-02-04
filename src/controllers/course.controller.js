@@ -1,5 +1,5 @@
 const {status} = require("http-status")
-const pool = require("../db/init");
+
 const {createCourseService, 
         getAllCoursesService,
         getCourseService, 

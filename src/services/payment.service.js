@@ -1,4 +1,4 @@
-const pool = require("../config/db");
+const pool = require("../db/init");
 const ApiError = require("../utils/error.util");
 const { generateCode } = require("../utils/utils");
 const { status } = require("http-status");

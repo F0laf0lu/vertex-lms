@@ -32,11 +32,7 @@ const registerService = async ({email,firstName,lastName, password, isInstructor
         const verifyToken = JWT.sign({ userId: user.id }, config.jwt.secret, {
             expiresIn: "1d",
         });
-        // try {
-        //     await sendVerificationEmail(email, verifyToken);
-        // } catch (emailError) {
-        //     console.error(`Failed to send email to ${email}:`, emailError);
-        // }
+        await sendVerificationEmail(email, verifyToken);
         return user;
     } catch (error) {
         await client.query("ROLLBACK");

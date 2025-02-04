@@ -22,7 +22,7 @@ const authMiddleware = async (req, res, next) => {
             );
         }
         if (!payload.userId) {
-            throw new ApiError(status.UNAUTHORIZED, "Authorization Failed. Invalid token payload");
+            throw new ApiError(status.UNAUTHORIZED, "Authorization Failed. Invalid token payloadc");
         }
         const result = await pool.query(
             "SELECT id, email, isinstructor, isverified, isadmin FROM users WHERE id=$1",
@@ -44,6 +44,10 @@ const isadmin = (req, res, next)=>{
     }
     next()
 }
+
+
+
+
 
 const isInstructor = (req,res, next)=>{
         if (!req.user.isinstructor) {
