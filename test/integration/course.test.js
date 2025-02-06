@@ -120,7 +120,7 @@ describe('Course Routes', () => {
                 .send(newCourse)
                 .expect(status.CREATED);
 
-            courseId = res.body.data.id; // Get the course ID for update
+            courseId = res.body.data.id;
         });
 
         test("should update course if user is the course owner", async () => {
@@ -173,6 +173,57 @@ describe('Course Routes', () => {
         });
     });
 
+describe("DELETE /courses/:id", () => {
+    let courseId;
 
+    beforeEach(async () => {
+        newCourse = {
+            name: faker.lorem.word(5),
+            description: faker.lorem.sentence(),
+            difficulty: faker.helpers.arrayElement(["beginner", "intermediate", "advanced"]),
+        };
+
+        // Create a course to test deletion
+        const res = await request(app)
+            .post("/courses")
+            .set("Authorization", `Bearer ${authToken}`)
+            .send(newCourse)
+            .expect(status.CREATED);
+
+        courseId = res.body.data.id;
+    });
+
+    test("should delete course if user is the course owner", async () => {
+        await request(app)
+            .delete(`/courses/${courseId}`)
+            .set("Authorization", `Bearer ${authToken}`)
+            .expect(status.OK);
+    });
+
+    test("should reject delete if user is not the course owner", async () => {
+        let token = tokenFixtures.instructorTwoToken;
+
+        const res = await request(app)
+            .delete(`/courses/${courseId}`)
+            .set("Authorization", `Bearer ${token}`)
+            .expect(status.FORBIDDEN);
+
+        expect(res.body.message).toBe("Access denied: Not the course instructor.");
+    });
+
+    test("should not delete course if unauthenticated", async () => {
+        await request(app).delete(`/courses/${courseId}`).expect(status.UNAUTHORIZED);
+    });
+
+    test("should return 404 if course does not exist", async () => {
+        const invalidCourseId = "47d3f0e3-dd86-4ff5-98a6-26f56ecca369";
+        const res = await request(app)
+            .delete(`/courses/${invalidCourseId}`)
+            .set("Authorization", `Bearer ${authToken}`)
+            .expect(status.NOT_FOUND);
+
+        expect(res.body.message).toBe("Course not found");
+    });
+});
 
 });

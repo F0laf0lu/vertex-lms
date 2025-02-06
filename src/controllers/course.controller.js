@@ -98,7 +98,7 @@ const deleteCourse = async(req, res, next)=>{
     try {
         const { courseId } = req.params;
         const response = await deleteCourseService(courseId);
-        return res.status(status.NO_CONTENT).json({
+        return res.status(status.OK).json({
             success: true,
             message: response.message,
             data: {}
