@@ -161,7 +161,7 @@ const requestVerificationEmail = async (req, res, next) => {
             expiresIn: "1d",
         });
         await sendVerificationEmail(email, verifyToken);
-        res.status(StatusCodes.OK).json({
+        res.status(status.OK).json({
             message: "Verification email has been sent. Please check your inbox.",
         });
     } catch (error) {

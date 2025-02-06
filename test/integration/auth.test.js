@@ -121,6 +121,7 @@ describe("Auth Routes", () => {
             const res = await request(app)
                 .post("/auth/forgot-password")
                 .send({ email: user.email });
+            
             expect(res.statusCode).toBe(200);
             expect(res.body).toEqual({
                 success: true,
@@ -176,13 +177,10 @@ describe("Auth Routes", () => {
         it("should send a verification email if user is not verified", async () => {
             const user = await createUser(instructorOne)
             const authToken = instructorOneToken
-            
-
             const res = await request(app)
                 .post("/auth/resend-verification")
                 .send({ email: instructorOne.email })
                 .set("Authorization", `Bearer ${authToken}`);
-
             expect(res.statusCode).toBe(200);
             expect(res.body).toEqual({
                 message: "Verification email has been sent. Please check your inbox.",
@@ -196,7 +194,7 @@ describe("Auth Routes", () => {
         it("should return 403 if user is not authorized", async () => {
 
             const res = await request(app)
-                .post("/request-verification-email")
+                .post("/auth/resend-verification")
                 .send({ email: "user@example.com" })
                 .set("Authorization", "Bearer validToken");
 
@@ -208,7 +206,7 @@ describe("Auth Routes", () => {
             const token = studentOneToken
 
             const res = await request(app)
-                .post("/request-verification-email")
+                .post("/auth/resend-verification")
                 .send({ email: studentOne.email })
                 .set("Authorization", `Bearer ${token}`);
 
