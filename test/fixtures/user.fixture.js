@@ -81,7 +81,7 @@ const createUser = async(userDetails)=>{
         const profile = await pool.query('INSERT INTO students("user") VALUES($1) RETURNING id', [result.rows[0].id]);
         profileId = profile.rows[0].id;
     }
-    return result.rows[0], profileId
+    return { user: result.rows[0], profileId };
 }
 
 

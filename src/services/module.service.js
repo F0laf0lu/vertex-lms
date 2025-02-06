@@ -5,7 +5,7 @@ const { status } = require("http-status");
 const checkCourseExists = async (courseId) => {
     const courseResult = await pool.query("SELECT * FROM course WHERE id=$1", [courseId]);
     if (courseResult.rows.length === 0) {
-        throw new ApiError(status.NOT_FOUND, "Course not found");
+        throw new ApiError(status.NOT_FOUND, "invalidCourseId");
     }
     return courseResult.rows[0];
 };

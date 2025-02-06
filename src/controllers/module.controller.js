@@ -6,10 +6,8 @@ const createModule = async (req, res, next) => {
     try {
         const { courseId } = req.params;
         const { name, description } = req.body;
-
         await moduleService.checkCourseExists(courseId);
         const newModule = await moduleService.createModule(courseId, { name, description });
-
         return res.status(status.CREATED).json({
             success: true,
             data: newModule,
