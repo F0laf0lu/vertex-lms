@@ -2,6 +2,7 @@ const multer = require("multer");
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const { generateCode } = require("../utils/utils");
 const path = require("path");
+const logger = require("../config/logger");
 
 const s3 = new S3Client({
     credentials: {
@@ -32,7 +33,7 @@ const uploadToS3 = async (file) => {
     return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uniqueFilename}`;
 };
 
-const removeFromS3 = async (fileUrl) => {
+const removeFromS3 = async (fileUrl, next) => {
     try {
         // Extract the S3 key from the URL
         const key = fileUrl.split(".amazonaws.com/")[1];
@@ -46,7 +47,8 @@ const removeFromS3 = async (fileUrl) => {
         await s3.send(command);
         console.log(`File deleted from S3: ${key}`);
     } catch (error) {
-        console.error("Error deleting file from S3:", error);
+        // console.error("Error deleting file from S3:", error);
+        logger.error("Error deleting file from S3:", error);
     }
 };
 

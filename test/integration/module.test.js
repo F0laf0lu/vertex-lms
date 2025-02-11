@@ -25,7 +25,6 @@ beforeAll(async () => {
     const course = await courseFixtures.createCourse(courseFixtures.courseOne)
     courseId = course.id;
 
-    // Mock authentication token (replace with actual logic if needed)
     authToken = tokenFixtures.instructorOneToken
 });
 

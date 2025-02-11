@@ -1,5 +1,9 @@
 {
     "yaml.schemas": {
-        "https://www.artillery.io/schema.json": []
+        "https://www.artillery.io/schema.json": [
+            "file:///c%3A/Users/Folafolu/Desktop/vertex-learn/load-tests/loadtest.yaml",
+            "file:///c%3A/Users/Folafolu/Desktop/vertex-learn/load-tests/loadtest.yml",
+            "file:///c%3A/Users/Folafolu/Desktop/vertex-learn/load-tests/auth-load-test.yml"
+        ]
     }
 }

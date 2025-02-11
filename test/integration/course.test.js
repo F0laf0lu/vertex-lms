@@ -155,7 +155,6 @@ describe('Course Routes', () => {
                 .set("Authorization", `Bearer ${token}`)
                 .send(updatedCourse)
                 .expect(status.FORBIDDEN);
-
             expect(res.body.message).toBe("Access denied: Not the course instructor.");
         });
 
@@ -189,7 +188,7 @@ describe('Course Routes', () => {
                 .set("Authorization", `Bearer ${authToken}`)
                 .send(newCourse)
                 .expect(status.CREATED);
-
+                
             courseId = res.body.data.id;
         });
 
