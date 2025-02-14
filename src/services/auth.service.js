@@ -8,7 +8,7 @@ const { sendVerificationEmail } = require("../services/email.service");
 const logger = require("../config/logger");
 
 
-const registerService = async ({ email, firstName, lastName, password, isInstructor }) => {
+const registerService = async ({ email, firstName, lastName, password, isinstructor }) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
@@ -27,7 +27,7 @@ const registerService = async ({ email, firstName, lastName, password, isInstruc
             firstName,
             lastName,
             hashedPassword,
-            Boolean(isInstructor),
+            Boolean(isinstructor),
         ]);
 
         if (rows.length === 0) {
@@ -37,7 +37,7 @@ const registerService = async ({ email, firstName, lastName, password, isInstruc
         const user = rows[0];
 
         // Batch insert to the appropriate table
-        const insertRoleQuery = isInstructor
+        const insertRoleQuery = isinstructor
             ? `INSERT INTO instructors ("user") VALUES ($1)`
             : `INSERT INTO students ("user") VALUES ($1)`;
         await client.query(insertRoleQuery, [user.id]);

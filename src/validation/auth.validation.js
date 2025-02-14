@@ -11,7 +11,7 @@ const registerSchema = Joi.object({
     // .message(
     //     "Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, a number, and a special character."
     // )
-    isInstructor: Joi.boolean().default(false)
+    isinstructor: Joi.boolean().default(false)
 });
 
 const loginSchema = Joi.object({

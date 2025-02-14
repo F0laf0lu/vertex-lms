@@ -31,6 +31,7 @@ const getLessons = async(req,res,next)=>{
 
 const createLesson = async (req, res, next) => {
     try {
+        console.log(req.body)
         const { moduleId } = req.params;
         const { name, lessontext, duration } = req.body;
         const lessonvideo = req.file ? `/uploads/${req.file.filename}` : null;
